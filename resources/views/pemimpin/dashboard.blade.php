@@ -221,9 +221,7 @@ const wilayahData = @json($wilayah);
 const trendData = @json($trend);
 
 new Chart(document.getElementById('kecamatanChart'), {
-
     type: 'bar',
-
     data: {
         labels: wilayahData.map(w => w.nama_wilayah),
         datasets: [{
@@ -231,14 +229,10 @@ new Chart(document.getElementById('kecamatanChart'), {
             backgroundColor: '#0d6efd'
         }]
     }
-
 });
 
-
 new Chart(document.getElementById('trendChart'), {
-
     type: 'line',
-
     data: {
         labels: trendData.map(t => 'Bulan ' + t.bulan),
         datasets: [{
@@ -248,47 +242,72 @@ new Chart(document.getElementById('trendChart'), {
             fill: true
         }]
     }
-
 });
 
-
 new Chart(document.getElementById('heatmapChart'), {
-
     type: 'bar',
-
     data: {
         labels: wilayahData.map(w => w.nama_wilayah),
         datasets: [{
-
             data: wilayahData.map(w => w.progress),
-
             backgroundColor: wilayahData.map(w => {
                 if (w.progress < 40) return '#dc3545';
                 if (w.progress < 70) return '#ffc107';
                 return '#28a745';
             })
-
         }]
     }
-
 });
 </script>
 
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<!-- ✅ MAP REALTIME (INI SAJA YANG BERUBAH) -->
 <script>
-var map = L.map('map').setView([-0.8917, 119.8707], 12);
+const mapData = @json($dataMap ?? []);
+
+// default lokasi
+let lat = -0.8917;
+let lng = 119.8707;
+
+if (mapData.length) {
+    lat = mapData[0].latitude;
+    lng = mapData[0].longitude;
+}
+
+var map = L.map('map').setView([lat, lng], 12);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(map);
 
-L.marker([-0.8917, 119.8707])
-    .addTo(map)
-    .bindPopup("Wilayah Monitoring");
+// 🔥 LOOP DATA DARI DATABASE
+mapData.forEach(item => {
+
+    if (!item.latitude || !item.longitude) return;
+
+    let color = 'green';
+
+    if (item.progress < 40) {
+        color = 'red';
+    } else if (item.progress < 70) {
+        color = 'orange';
+    }
+
+    let marker = L.circleMarker([item.latitude, item.longitude], {
+        radius: 8,
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.8
+    }).addTo(map);
+
+    marker.bindPopup(
+        "<b>" + item.nama_wilayah + "</b><br>Progress: " + Math.round(item.progress) + "%"
+    );
+
+});
 </script>
 
 @endsection

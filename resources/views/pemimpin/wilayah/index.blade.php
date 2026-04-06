@@ -5,145 +5,160 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<h3 class="mb-4">Monitoring Wilayah</h3>
+<style>
+/* ================= TABLE FIX ================= */
+.table {
+    table-layout: fixed;
+    width: 100%;
+}
 
-<div class="card shadow-sm">
+.table th,
+.table td {
+    text-align: center;
+    vertical-align: middle;
+}
 
-    <div class="card-header bg-primary text-white">
-        Data Monitoring Wilayah
-    </div>
+/* WIDTH KOLOM */
+.col-no {
+    width: 60px;
+}
 
-    <div class="card-body">
+.col-petugas {
+    width: 180px;
+}
+
+.col-wilayah {
+    width: 200px;
+}
+
+.col-progress {
+    width: 220px;
+}
+
+.col-lokasi {
+    width: 120px;
+}
+
+.col-status {
+    width: 120px;
+}
+
+.col-aksi {
+    width: 100px;
+}
+
+/* TEXT RAPAT */
+.text-truncate-custom {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* PROGRESS */
+.progress {
+    height: 8px;
+    margin-bottom: 4px;
+}
+
+/* CARD */
+.mobile-card {
+    border-radius: 12px;
+    background: white;
+}
+
+/* HOVER */
+.table-hover tbody tr:hover {
+    background: #f9fafb;
+}
+</style>
+
+<h4 class="mb-4 fw-bold">Monitoring Wilayah</h4>
+
+<!-- ================= DESKTOP ================= -->
+<div class="card shadow-sm d-none d-md-block">
+
+    <div class="card-body p-0">
 
         <div class="table-responsive">
 
-            <table class="table table-bordered table-hover">
+            <table class="table table-hover align-middle mb-0">
 
-                <thead class="table-light text-center">
-
+                <thead class="table-light">
                     <tr>
-                        <th width="5%">No</th>
-                        <th>Petugas</th>
-                        <th>Wilayah</th>
-                        <th width="25%">Progress</th>
-                        <th width="15%">Lokasi</th>
-                        <th width="15%">Status</th>
-                        <th width="10%">Aksi</th>
+                        <th class="col-no">No</th>
+                        <th class="col-petugas">Petugas</th>
+                        <th class="col-wilayah">Wilayah</th>
+                        <th class="col-progress">Progress</th>
+                        <th class="col-lokasi">Lokasi</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-aksi">Aksi</th>
                     </tr>
-
                 </thead>
 
                 <tbody>
 
                     @forelse($data as $d)
 
+                    @php
+                    $progress = $d->progress ?? 0;
+                    $color = $progress >=70 ? 'bg-success' : ($progress >=40 ? 'bg-warning' : 'bg-danger');
+                    @endphp
+
                     <tr>
 
-                        <td class="text-center">
-                            {{ $loop->iteration }}
-                        </td>
+                        <td class="col-no">{{ $loop->iteration }}</td>
 
-                        <td>
+                        <td class="col-petugas text-truncate-custom">
                             {{ $d->petugas->name }}
                         </td>
 
-                        <td>
+                        <td class="col-wilayah fw-semibold text-truncate-custom">
                             {{ $d->nama_wilayah }}
                         </td>
 
-                        <td>
-
-                            @php
-
-                            $progress = $d->progress ?? 0;
-
-                            $color = 'bg-danger';
-
-                            if($progress >= 70){
-                            $color = 'bg-success';
-                            }elseif($progress >= 40){
-                            $color = 'bg-warning';
-                            }
-
-                            @endphp
+                        <td class="col-progress">
 
                             <div class="progress">
-
-                                <div class="progress-bar {{ $color }}" style="width: {{ $progress }}%">
-
-                                    {{ round($progress) }}%
-
-                                </div>
-
+                                <div class="progress-bar {{ $color }}" style="width: {{ $progress }}%"></div>
                             </div>
+
+                            <small>{{ round($progress) }}%</small>
 
                         </td>
 
-
-                        <!-- LOKASI -->
-
-                        <td class="text-center">
+                        <td class="col-lokasi">
 
                             @if($d->latitude && $d->longitude)
 
-                            <div class="d-flex justify-content-center gap-1">
-
-                                <a href="https://maps.google.com/?q={{ $d->latitude }},{{ $d->longitude }}"
-                                    target="_blank" class="btn btn-sm btn-outline-primary">
-
-                                    <i class="fa fa-map-marker"></i>
-
-                                </a>
-
-                                <button class="btn btn-sm btn-outline-success"
-                                    onclick="showMap({{ $d->latitude }}, {{ $d->longitude }})">
-
-                                    <i class="fa fa-map"></i>
-
-                                </button>
-
-                            </div>
+                            <button class="btn btn-sm btn-success"
+                                onclick="showMap({{ $d->latitude }}, {{ $d->longitude }})">
+                                <i class="fa fa-map"></i>
+                            </button>
 
                             @else
-
                             <span class="text-muted">-</span>
-
                             @endif
 
                         </td>
 
+                        <td class="col-status">
 
-                        <td class="text-center">
+                            @if($d->status_validasi=='valid')
+                            <span class="badge bg-success">Valid</span>
 
-                            @if($d->status_validasi == 'valid')
-
-                            <span class="badge bg-success">
-                                Valid
-                            </span>
-
-                            @elseif($d->status_validasi == 'pending')
-
-                            <span class="badge bg-warning text-dark">
-                                Pending
-                            </span>
+                            @elseif($d->status_validasi=='pending')
+                            <span class="badge bg-warning text-dark">Pending</span>
 
                             @else
-
-                            <span class="badge bg-danger">
-                                Ditolak
-                            </span>
-
+                            <span class="badge bg-danger">Ditolak</span>
                             @endif
 
                         </td>
 
-
-                        <td class="text-center">
+                        <td class="col-aksi">
 
                             <a href="/pemimpin/wilayah/{{ $d->id }}" class="btn btn-primary btn-sm">
-
-                                <i class="fa fa-eye"></i> Detail
-
+                                <i class="fa fa-eye"></i>
                             </a>
 
                         </td>
@@ -170,70 +185,103 @@
 
 </div>
 
+<!-- ================= MOBILE ================= -->
+<div class="d-md-none">
 
-<!-- MODAL MAP -->
+    @foreach($data as $d)
 
-<div class="modal fade" id="mapModal" tabindex="-1">
+    @php
+    $progress = $d->progress ?? 0;
+    $color = $progress >=70 ? 'bg-success' : ($progress >=40 ? 'bg-warning' : 'bg-danger');
+    @endphp
 
-    <div class="modal-dialog modal-lg">
+    <div class="mobile-card shadow-sm p-3 mb-3">
 
-        <div class="modal-content">
+        <div class="fw-bold">{{ $d->nama_wilayah }}</div>
+        <small class="text-muted">{{ $d->petugas->name }}</small>
 
-            <div class="modal-header">
-
-                <h5 class="modal-title">
-                    Lokasi Wilayah
-                </h5>
-
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-
+        <div class="mt-2">
+            <div class="progress">
+                <div class="progress-bar {{ $color }}" style="width: {{ $progress }}%"></div>
             </div>
+            <small>{{ round($progress) }}%</small>
+        </div>
 
-            <div class="modal-body">
+        <div class="mt-2">
 
-                <div id="previewMap" style="height:400px;border-radius:8px;"></div>
+            @if($d->status_validasi=='valid')
+            <span class="badge bg-success">Valid</span>
 
-            </div>
+            @elseif($d->status_validasi=='pending')
+            <span class="badge bg-warning text-dark">Pending</span>
+
+            @else
+            <span class="badge bg-danger">Ditolak</span>
+            @endif
+
+        </div>
+
+        <div class="mt-3 d-flex gap-2">
+
+            <a href="/pemimpin/wilayah/{{ $d->id }}" class="btn btn-primary w-50 btn-sm">
+                Detail
+            </a>
+
+            @if($d->latitude && $d->longitude)
+            <button onclick="showMap({{ $d->latitude }}, {{ $d->longitude }})" class="btn btn-success w-50 btn-sm">
+                Map
+            </button>
+            @endif
 
         </div>
 
     </div>
 
+    @endforeach
+
 </div>
 
+<!-- ================= MODAL MAP ================= -->
+<div class="modal fade" id="mapModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5>Lokasi Wilayah</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="previewMap" style="height:400px;border-radius:10px;"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 <script>
 let previewMap;
-let marker;
 
 function showMap(lat, lng) {
 
-    const modal = new bootstrap.Modal(
-        document.getElementById('mapModal')
-    );
-
+    let modal = new bootstrap.Modal(document.getElementById('mapModal'));
     modal.show();
 
-    setTimeout(function() {
+    setTimeout(() => {
 
         if (previewMap) {
             previewMap.remove();
         }
 
-        previewMap = L.map('previewMap')
-            .setView([lat, lng], 15);
+        previewMap = L.map('previewMap').setView([lat, lng], 15);
 
-        L.tileLayer(
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19
-            }
-        ).addTo(previewMap);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(previewMap);
 
-        marker = L.marker([lat, lng])
-            .addTo(previewMap);
+        L.marker([lat, lng]).addTo(previewMap);
 
     }, 300);
-
 }
 </script>
 

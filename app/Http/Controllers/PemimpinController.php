@@ -27,32 +27,29 @@ $avgProgress = DataWilayah::avg('progress') ?? 0;
 
 
 /* PROGRESS PER KECAMATAN */
-
 $wilayah = DataWilayah::select(
-'nama_wilayah',
-DB::raw('AVG(progress) as progress')
+    'nama_wilayah',
+    DB::raw('AVG(progress) as progress')
 )
 ->groupBy('nama_wilayah')
 ->orderBy('progress','desc')
 ->get();
 
 
-/* TREND PEMBANGUNAN */
-
+/* TREND */
 $trend = DataWilayah::select(
-DB::raw('MONTH(tanggal_input) as bulan'),
-DB::raw('AVG(progress) as progress')
+    DB::raw('MONTH(tanggal_input) as bulan'),
+    DB::raw('AVG(progress) as progress')
 )
 ->groupBy(DB::raw('MONTH(tanggal_input)'))
 ->orderBy('bulan')
 ->get();
 
 
-/* RANKING WILAYAH */
-
+/* RANKING */
 $ranking = DataWilayah::select(
-'nama_wilayah',
-DB::raw('AVG(progress) as progress')
+    'nama_wilayah',
+    DB::raw('AVG(progress) as progress')
 )
 ->groupBy('nama_wilayah')
 ->orderBy('progress','desc')
@@ -60,11 +57,10 @@ DB::raw('AVG(progress) as progress')
 ->get();
 
 
-/* ALERT PROGRESS RENDAH */
-
+/* ALERT */
 $alert = DataWilayah::select(
-'nama_wilayah',
-DB::raw('AVG(progress) as progress')
+    'nama_wilayah',
+    DB::raw('AVG(progress) as progress')
 )
 ->groupBy('nama_wilayah')
 ->havingRaw('AVG(progress) < 40')
@@ -72,59 +68,59 @@ DB::raw('AVG(progress) as progress')
 ->get();
 
 
-return view('pemimpin.dashboard',compact(
-'total',
-'valid',
-'pending',
-'ditolak',
-'avgProgress',
-'wilayah',
-'trend',
-'ranking',
-'alert'
+/* ✅ MAP DATA (INI KUNCI NYA) */
+$dataMap = DataWilayah::select(
+    'nama_wilayah',
+    'latitude',
+    'longitude',
+    'progress'
+)
+->whereNotNull('latitude')
+->whereNotNull('longitude')
+->get();
+
+
+return view('pemimpin.dashboard', compact(
+    'total',
+    'valid',
+    'pending',
+    'ditolak',
+    'avgProgress',
+    'wilayah',
+    'trend',
+    'ranking',
+    'alert',
+    'dataMap'
 ));
 
 }
 
 
+/* ======================== */
 public function wilayah()
 {
-
-$data = DataWilayah::with('petugas')
-->latest()
-->get();
-
+$data = DataWilayah::with('petugas')->latest()->get();
 return view('pemimpin.wilayah.index',compact('data'));
-
 }
-
 
 public function detail($id)
 {
-
 $data = DataWilayah::with('petugas')->findOrFail($id);
-
 return view('pemimpin.wilayah.detail',compact('data'));
-
 }
-
 
 public function laporan()
 {
-
 $data = DataWilayah::with('petugas')
 ->where('status_validasi','valid')
 ->latest()
 ->get();
 
 return view('pemimpin.laporan.index',compact('data'));
-
 }
-
 
 public function exportPDF(Request $request)
 {
-
 $data = DataWilayah::with('petugas')
 ->where('status_validasi','valid')
 ->get();
@@ -149,18 +145,11 @@ $pdf = Pdf::loadView('pemimpin.laporan.pdf',compact('data'))
 ->setPaper($paper,$orientation);
 
 return $pdf->download('laporan_wilayah.pdf');
-
 }
-
 
 public function exportExcel()
 {
-
-return Excel::download(
-new LaporanExport,
-'laporan_wilayah.xlsx'
-);
-
+return Excel::download(new LaporanExport,'laporan_wilayah.xlsx');
 }
 
 }
